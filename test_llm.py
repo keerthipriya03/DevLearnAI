@@ -37,4 +37,5 @@ result = generate_code_review(
 )
 
 
+print(type(result))
 print(result)

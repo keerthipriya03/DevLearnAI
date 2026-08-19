@@ -1,7 +1,9 @@
 import os
+import json
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 
 
 load_dotenv()
@@ -35,46 +37,73 @@ AST structural analysis:
 Source code:
 
 ```python
-def find_max(numbers):
-    maximum = numbers[0]
-
-    for i in range(len(numbers)):
-        if numbers[i] > maximum:
-            maximum = numbers[i]
-
-    return maximum
+{code}
 ```
+Return ONLY valid JSON using exactly this structure:
 
-Provide:
+{{
+    "summary": "string",
 
-1. SUMMARY
-Explain what the code does.
-2. POTENTIAL ISSUES
-Identify bugs, edge cases, or possible problems.
-If there are no obvious issues, say so.
-3. CODE EXPLANATION
-Explain how the code works.
-4. IMPROVEMENTS
-Suggest meaningful improvements.
-5. TIME COMPLEXITY
-Provide the estimated time complexity and explain why.
-6. SPACE COMPLEXITY
-Provide the estimated space complexity and explain why.
-7. CONCEPTS
-List the important programming concepts used.
-8. LEARNING EXPLANATION
-Explain the code according to the selected difficulty level.
+    "issues": [
+        {{
+            "title": "string",
+            "description": "string",
+            "severity": "Low/Medium/High"
+        }}
+    ],
 
-Be accurate.
-Do not invent bugs that are not supported by the code.
+    "improvements": [
+        {{
+            "title": "string",
+            "description": "string"
+        }}
+    ],
+
+    "time_complexity": {{
+        "value": "string",
+        "explanation": "string"
+    }},
+
+    "space_complexity": {{
+        "value": "string",
+        "explanation": "string"
+    }},
+
+    "concepts": [
+        "string"
+    ],
+
+    "learning_explanation": "string",
+
+    "improved_code": "string"
+}}
+
+Rules:
+
+- Return only JSON.
+- Do not use Markdown.
+- Do not add headings outside the JSON.
+- Do not invent bugs.
+- If there are no major issues, return an empty issues list.
+- The improved_code must contain valid Python code.
 """
 
     response = client.models.generate_content(
         model="gemini-3.6-flash",
-        contents=prompt
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json"
+        )
     )
 
-    return response.text
+    try:
+        return json.loads(response.text)
+
+    except json.JSONDecodeError:
+        return {
+            "error": "The AI returned an invalid response format.",
+            "raw_response": response.text
+        }
 
 
 # python -m py_compile modules/llm.py           (to check the syntax of the code)

@@ -26,18 +26,20 @@
 
 
 ##converting program with streamlit
-import os
 import streamlit as st
-from dotenv import load_dotenv
-from google import genai
 
-from modules.code_analyzer import analyze_code
+import os                                  #no need after llm integration into the model
+from dotenv import load_dotenv             #no need after llm integration into the model
+from google import genai                   #no need after llm integration into the model
+
+from modules.code_analyzer import analyze_code     
+from modules.llm import generate_code_review
 
 
 # Load environment variables
-load_dotenv()
-api_key = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=api_key)
+load_dotenv()                               #no need after llm integration into the model
+api_key = os.getenv("GEMINI_API_KEY")       #no need after llm integration into the model
+client = genai.Client(api_key=api_key)      #no need after llm integration into the model
 
 
 # Page Configuration
@@ -182,10 +184,151 @@ elif page == "💻 Code Assistant":
                         analysis["returns"]
                     )
 
-                st.info(
-                    "LLM-based code explanation and "
-                    "review will be added next."
-                )
+                with st.spinner(
+                    "🤖 AI is analyzing your code..."
+                ):
+
+                    review = generate_code_review(
+                        code,
+                        analysis,
+                        explanation_level
+                    )
+
+
+                if "error" in review:
+
+                    st.error(
+                        review["error"]
+                    )
+
+                    st.code(
+                        review["raw_response"]
+                    )
+
+                else:
+
+                    st.subheader(
+                        "🤖 AI Code Review"
+                    )
+
+                    # Summary
+                    st.markdown("### 📋 Summary")
+
+                    st.write(
+                        review["summary"]
+                    )
+
+                    # Potential Issues
+                    st.markdown("### 🐛 Potential Issues")
+
+                    if review["issues"]:
+
+                        for issue in review["issues"]:
+
+                            severity = issue["severity"]
+
+                            if severity == "High":
+
+                                st.error(
+                                    f"🔴 {issue['title']}\n\n"
+                                    f"{issue['description']}"
+                                )
+
+                            elif severity == "Medium":
+
+                                st.warning(
+                                    f"🟠 {issue['title']}\n\n"
+                                    f"{issue['description']}"
+                                )
+
+                            else:
+
+                                st.info(
+                                    f"🟢 {issue['title']}\n\n"
+                                    f"{issue['description']}"
+                                )
+
+                    else:
+
+                        st.success(
+                            "No major issues were detected."
+                        )
+
+                    # Improvements
+                    st.markdown("### 🔧 Improvements")
+
+                    if review["improvements"]:
+
+                        for improvement in review["improvements"]:
+
+                            st.write(
+                                f"**{improvement['title']}**"
+                            )
+
+                            st.write(
+                                improvement["description"]
+                            )
+
+                    else:
+
+                        st.info(
+                            "No major improvements suggested."
+                        )
+
+                    # Complexity
+                    st.markdown("### ⏱ Complexity Analysis")
+
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+
+                        st.metric(
+                            "Time Complexity",
+                            review["time_complexity"]["value"]
+                        )
+
+                        st.write(
+                            review["time_complexity"]["explanation"]
+                        )
+
+                    with col2:
+
+                        st.metric(
+                            "Space Complexity",
+                            review["space_complexity"]["value"]
+                        )
+
+                        st.write(
+                            review["space_complexity"]["explanation"]
+                        )
+
+                    # Concepts
+                    st.markdown("### 🎓 Programming Concepts")
+
+                    for concept in review["concepts"]:
+
+                        st.markdown(
+                            f"- {concept}"
+                        )
+
+                    # Learning Explanation
+                    st.markdown(
+                        "### 📖 Learning Explanation"
+                    )
+
+                    st.write(
+                        review["learning_explanation"]
+                    )
+
+                    # Improved Code
+                    st.markdown(
+                        "### 💻 Suggested Improved Code"
+                    )
+
+                    st.code(
+                        review["improved_code"],
+                        language="python"
+                    )
 
 
 # QUIZ
