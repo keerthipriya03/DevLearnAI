@@ -25,58 +25,172 @@
 # print(response.text)
 
 
-##concerting program with streamlit
+##converting program with streamlit
 import os
-
 import streamlit as st
 from dotenv import load_dotenv
 from google import genai
 
+from modules.code_analyzer import analyze_code
+
 
 # Load environment variables
 load_dotenv()
-
-# Get API key
 api_key = os.getenv("GEMINI_API_KEY")
-
-if not api_key:
-    st.error("GEMINI_API_KEY was not found in the .env file.")
-    st.stop()
-
-# Create Gemini client
 client = genai.Client(api_key=api_key)
 
 
-# Configure Streamlit page
+# Page Configuration
 st.set_page_config(
     page_title="DevLearn AI",
-    page_icon="🤖"
+    page_icon="🤖",
+    layout="wide"
 )
 
 
-# Application title
+# Application Title
 st.title("🤖 DevLearn AI")
-st.subheader("AI-Powered Study & Coding Assistant")
-
-
-# User input
-question = st.text_input(
-    "Ask a question"
+st.write(
+    "AI-Powered Study & Coding Assistant"
 )
 
 
-# Ask AI button
-if st.button("Ask AI"):
+# Sidebar Navigation
+st.sidebar.title("Navigation")
+page = st.sidebar.radio(
+    "Choose a feature:",
+    [
+        "📚 Knowledge Assistant",
+        "💻 Code Assistant",
+        "🎯 Quiz"
+    ]
+)
 
-    if question:
 
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=question
-        )
+# KNOWLEDGE ASSISTANT
+if page == "📚 Knowledge Assistant":
+    st.header("📚 Personal Knowledge Assistant")
+    st.info(
+        "Document-based Q&A will be implemented in the RAG stage."
+    )
 
-        st.write(response.text)
 
-    else:
+# CODE ASSISTANT
+elif page == "💻 Code Assistant":
+    st.header("💻 AI Code Assistant")
+    st.write(
+        "Analyze, understand and improve your Python code."
+    )
 
-        st.warning("Please enter a question.")
+    # Explanation level
+    explanation_level = st.selectbox(
+        "Choose explanation level:",
+        [
+            "Beginner",
+            "Intermediate",
+            "Advanced"
+        ]
+    )
+
+    # Code input
+    code = st.text_area(
+        "Paste your Python code here:",
+        height=300,
+        placeholder="""Example:
+                        def find_max(arr):
+                            maximum = arr[0]
+
+                            for value in arr:
+                                if value > maximum:
+                                    maximum = value
+
+                            return maximum
+                        """
+    )
+
+    # Analyze button
+    if st.button(
+        "🔍 Analyze Code",
+        type="primary"
+    ):
+
+        if not code.strip():
+
+            st.warning(
+                "Please enter some Python code first."
+            )
+
+        else:
+
+            analysis = analyze_code(code)
+
+            if not analysis["valid"]:
+
+                st.error("❌ Invalid Python code")
+
+                st.write(
+                    analysis["error"]
+                )
+
+            else:
+
+                st.success(
+                    "✅ Python syntax is valid"
+                )
+
+                st.subheader(
+                    "📊 Code Structure"
+                )
+
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    st.metric(
+                        "Functions",
+                        analysis["functions"]
+                    )
+
+                    st.metric(
+                        "Loops",
+                        analysis["loops"]
+                    )
+
+                    st.metric(
+                        "Conditions",
+                        analysis["conditions"]
+                    )
+
+                with col2:
+                    st.metric(
+                        "Classes",
+                        analysis["classes"]
+                    )
+
+                    st.metric(
+                        "Imports",
+                        analysis["imports"]
+                    )
+
+                    st.metric(
+                        "Function Calls",
+                        analysis["function_calls"]
+                    )
+
+                with col3:
+                    st.metric(
+                        "Return Statements",
+                        analysis["returns"]
+                    )
+
+                st.info(
+                    "LLM-based code explanation and "
+                    "review will be added next."
+                )
+
+
+# QUIZ
+elif page == "🎯 Quiz":
+    st.header("🎯 AI Quiz")
+    st.info(
+        "Quiz generation will be implemented later."
+    )
