@@ -95,20 +95,65 @@ elif page == "💻 Code Assistant":
     )
 
     # Code input
-    code = st.text_area(
-        "Paste your Python code here:",
-        height=300,
-        placeholder="""Example:
-                        def find_max(arr):
-                            maximum = arr[0]
+    st.markdown("### 📥 Choose Code Input")
 
-                            for value in arr:
-                                if value > maximum:
-                                    maximum = value
-
-                            return maximum
-                        """
+    input_method = st.radio(
+        "How would you like to provide your code?",
+        [
+            "✏️ Paste Code",
+            "📁 Upload Python File"
+        ],
+        horizontal=True
     )
+
+    code = ""
+    source_name = "No source"
+
+
+    if input_method == "✏️ Paste Code":
+
+        code = st.text_area(
+            "Paste your Python code here:",
+            height=300,
+            placeholder="""Example:
+
+    def find_max(arr):
+        maximum = arr[0]
+
+        for value in arr:
+            if value > maximum:
+                maximum = value
+
+        return maximum
+    """
+        )
+
+
+    else:
+
+        uploaded_file = st.file_uploader(
+            "Upload a Python (.py) file",
+            type=["py"]
+        )
+
+        if uploaded_file is not None:
+
+            code = uploaded_file.read().decode(
+                "utf-8"
+            )
+
+            st.success(
+                f"Uploaded: {uploaded_file.name}"
+            )
+
+            with st.expander(
+                "👀 Preview Code"
+            ):
+
+                st.code(
+                    code,
+                    language="python"
+                )
 
     # Analyze button
     if st.button(
@@ -119,11 +164,13 @@ elif page == "💻 Code Assistant":
         if not code.strip():
 
             st.warning(
-                "Please enter some Python code first."
+                "Please provide Python code before analysis."
             )
 
         else:
-
+            st.caption(
+                f"Analyzing: {source_name}"
+            )
             analysis = analyze_code(code)
 
             if not analysis["valid"]:
