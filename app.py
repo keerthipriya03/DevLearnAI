@@ -28,18 +28,18 @@
 ##converting program with streamlit
 import streamlit as st
 
-import os                                  #no need after llm integration into the model
-from dotenv import load_dotenv             #no need after llm integration into the model
-from google import genai                   #no need after llm integration into the model
+# import os                                  #no need after llm integration into the model
+# from dotenv import load_dotenv             #no need after llm integration into the model
+# from google import genai                   #no need after llm integration into the model
 
 from modules.code_analyzer import( analyze_code , extract_functions, get_function_source )
 from modules.llm import generate_code_review
 
 
 # Load environment variables
-load_dotenv()                               #no need after llm integration into the model
-api_key = os.getenv("GEMINI_API_KEY")       #no need after llm integration into the model
-client = genai.Client(api_key=api_key)      #no need after llm integration into the model
+# load_dotenv()                               #no need after llm integration into the model
+# api_key = os.getenv("GEMINI_API_KEY")       #no need after llm integration into the model
+# client = genai.Client(api_key=api_key)      #no need after llm integration into the model
 
 
 # Page Configuration
@@ -93,6 +93,8 @@ elif page == "💻 Code Assistant":
         st.session_state.analysis_complete = False
     if "analysis_result" not in st.session_state:
         st.session_state.analysis_result = None
+    if "review_result" not in st.session_state:
+        st.session_state.review_result = None
 
     # Explanation level
     explanation_level = st.selectbox(
@@ -199,6 +201,7 @@ elif page == "💻 Code Assistant":
                 st.session_state.analysis_complete = True
 
                 st.session_state.analysis_result = analysis
+                st.session_state.review_result = None
 
 
     # --------------------------------------------------
@@ -341,7 +344,7 @@ elif page == "💻 Code Assistant":
             )
 
         st.info(
-            f"Selected: {selected_name}"
+            f"Selected: **{selected_name}**"
         )
 
 
@@ -368,196 +371,220 @@ elif page == "💻 Code Assistant":
         )
 
 
+        # # --------------------------------------------------
+        # # Gemini Analysis
+        # # --------------------------------------------------
+
+        # with st.spinner(
+        #     "🤖 AI is analyzing your code..."
+        # ):
+
+        #     review = generate_code_review(
+        #         selected_code,
+        #         selected_analysis,
+        #         explanation_level
+        #     )
+
         # --------------------------------------------------
-        # Gemini Analysis
+        # Analyze Selected Code Button
         # --------------------------------------------------
 
-        with st.spinner(
-            "🤖 AI is analyzing your code..."
+        if st.button(
+            "🤖 Analyze Selected Code",
+            type="primary"
         ):
 
-            review = generate_code_review(
-                selected_code,
-                selected_analysis,
-                explanation_level
-            )
+            with st.spinner(
+                "🤖 AI is analyzing your code..."
+            ):
+
+                review = generate_code_review(
+                    selected_code,
+                    selected_analysis,
+                    explanation_level
+                )
+
+                st.session_state.review_result = review
 
 
         # --------------------------------------------------
         # AI Review Result
         # --------------------------------------------------
 
-        if "error" in review:
+        review = st.session_state.review_result
 
-            st.error(
-                review["error"]
-            )
+        if review is not None:
+            if "error" in review:
 
-            st.code(
-                review["raw_response"]
-            )
+                st.error(
+                    review["error"]
+                )
 
-        else:
-
-            st.subheader(
-                "🤖 AI Code Review"
-            )
-
-            # --------------------------------------------------
-            # Summary
-            # --------------------------------------------------
-
-            st.markdown(
-                "### 📋 Summary"
-            )
-
-            st.write(
-                review["summary"]
-            )
-
-
-            # --------------------------------------------------
-            # Potential Issues
-            # --------------------------------------------------
-
-            st.markdown(
-                "### 🐛 Potential Issues"
-            )
-
-            if review["issues"]:
-
-                for issue in review["issues"]:
-
-                    severity = issue["severity"]
-
-                    if severity == "High":
-
-                        st.error(
-                            f"🔴 {issue['title']}\n\n"
-                            f"{issue['description']}"
-                        )
-
-                    elif severity == "Medium":
-
-                        st.warning(
-                            f"🟠 {issue['title']}\n\n"
-                            f"{issue['description']}"
-                        )
-
-                    else:
-
-                        st.info(
-                            f"🟢 {issue['title']}\n\n"
-                            f"{issue['description']}"
-                        )
+                st.code(
+                    review["raw_response"]
+                )
 
             else:
 
-                st.success(
-                    "No major issues were detected."
+                st.subheader(
+                    "🤖 AI Code Review"
                 )
 
-
-            # --------------------------------------------------
-            # Improvements
-            # --------------------------------------------------
-
-            st.markdown(
-                "### 🔧 Improvements"
-            )
-
-            if review["improvements"]:
-
-                for improvement in review["improvements"]:
-
-                    st.write(
-                        f"**{improvement['title']}**"
-                    )
-
-                    st.write(
-                        improvement["description"]
-                    )
-
-            else:
-
-                st.info(
-                    "No major improvements suggested."
-                )
-
-
-            # --------------------------------------------------
-            # Complexity
-            # --------------------------------------------------
-
-            st.markdown(
-                "### ⏱ Complexity Analysis"
-            )
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-
-                st.metric(
-                    "Time Complexity",
-                    review["time_complexity"]["value"]
-                )
-
-                st.write(
-                    review["time_complexity"]["explanation"]
-                )
-
-            with col2:
-
-                st.metric(
-                    "Space Complexity",
-                    review["space_complexity"]["value"]
-                )
-
-                st.write(
-                    review["space_complexity"]["explanation"]
-                )
-
-
-            # --------------------------------------------------
-            # Programming Concepts
-            # --------------------------------------------------
-
-            st.markdown(
-                "### 🎓 Programming Concepts"
-            )
-
-            for concept in review["concepts"]:
+                # --------------------------------------------------
+                # Summary
+                # --------------------------------------------------
 
                 st.markdown(
-                    f"- {concept}"
+                    "### 📋 Summary"
+                )
+
+                st.write(
+                    review["summary"]
                 )
 
 
-            # --------------------------------------------------
-            # Learning Explanation
-            # --------------------------------------------------
+                # --------------------------------------------------
+                # Potential Issues
+                # --------------------------------------------------
 
-            st.markdown(
-                "### 📖 Learning Explanation"
-            )
+                st.markdown(
+                    "### 🐛 Potential Issues"
+                )
 
-            st.write(
-                review["learning_explanation"]
-            )
+                if review["issues"]:
+
+                    for issue in review["issues"]:
+
+                        severity = issue["severity"]
+
+                        if severity == "High":
+
+                            st.error(
+                                f"🔴 {issue['title']}\n\n"
+                                f"{issue['description']}"
+                            )
+
+                        elif severity == "Medium":
+
+                            st.warning(
+                                f"🟠 {issue['title']}\n\n"
+                                f"{issue['description']}"
+                            )
+
+                        else:
+
+                            st.info(
+                                f"🟢 {issue['title']}\n\n"
+                                f"{issue['description']}"
+                            )
+
+                else:
+
+                    st.success(
+                        "No major issues were detected."
+                    )
 
 
-            # --------------------------------------------------
-            # Improved Code
-            # --------------------------------------------------
+                # --------------------------------------------------
+                # Improvements
+                # --------------------------------------------------
 
-            st.markdown(
-                "### 💻 Suggested Improved Code"
-            )
+                st.markdown(
+                    "### 🔧 Improvements"
+                )
 
-            st.code(
-                review["improved_code"],
-                language="python"
-            )
+                if review["improvements"]:
+
+                    for improvement in review["improvements"]:
+
+                        st.write(
+                            f"**{improvement['title']}**"
+                        )
+
+                        st.write(
+                            improvement["description"]
+                        )
+
+                else:
+
+                    st.info(
+                        "No major improvements suggested."
+                    )
+
+
+                # --------------------------------------------------
+                # Complexity
+                # --------------------------------------------------
+
+                st.markdown(
+                    "### ⏱ Complexity Analysis"
+                )
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+
+                    st.metric(
+                        "Time Complexity",
+                        review["time_complexity"]["value"]
+                    )
+
+                    st.write(
+                        review["time_complexity"]["explanation"]
+                    )
+
+                with col2:
+
+                    st.metric(
+                        "Space Complexity",
+                        review["space_complexity"]["value"]
+                    )
+
+                    st.write(
+                        review["space_complexity"]["explanation"]
+                    )
+
+
+                # --------------------------------------------------
+                # Programming Concepts
+                # --------------------------------------------------
+
+                st.markdown(
+                    "### 🎓 Programming Concepts"
+                )
+
+                for concept in review["concepts"]:
+
+                    st.markdown(
+                        f"- {concept}"
+                    )
+
+
+                # --------------------------------------------------
+                # Learning Explanation
+                # --------------------------------------------------
+
+                st.markdown(
+                    "### 📖 Learning Explanation"
+                )
+
+                st.write(
+                    review["learning_explanation"]
+                )
+
+
+                # --------------------------------------------------
+                # Improved Code
+                # --------------------------------------------------
+
+                st.markdown(
+                    "### 💻 Suggested Improved Code"
+                )
+
+                st.code(
+                    review["improved_code"],
+                    language="python"
+                )
 
 # QUIZ
 elif page == "🎯 Quiz":
