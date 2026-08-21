@@ -66,3 +66,77 @@ def analyze_code(code):
         "function_calls": function_calls,
         "returns": returns
     }
+
+
+def extract_functions(code):
+
+    try:
+        tree = ast.parse(code)
+
+    except SyntaxError as e:
+
+        return {
+            "valid": False,
+            "error": str(e)
+        }
+
+    functions = []
+
+    for node in ast.walk(tree):
+
+        if isinstance(
+            node,
+            (ast.FunctionDef, ast.AsyncFunctionDef)
+        ):
+
+            functions.append(
+                {
+                    "name": node.name,
+                    "line": node.lineno,
+                    "end_line": getattr(
+                        node,
+                        "end_lineno",
+                        node.lineno
+                    )
+                }
+            )
+
+    return {
+        "valid": True,
+        "functions": functions
+    }
+
+
+
+def get_function_source(code, function_name):
+
+    try:
+        tree = ast.parse(code)
+
+    except SyntaxError:
+        return None
+
+    lines = code.splitlines()
+
+    for node in ast.walk(tree):
+
+        if isinstance(
+            node,
+            (ast.FunctionDef, ast.AsyncFunctionDef)
+        ):
+
+            if node.name == function_name:
+
+                start = node.lineno - 1
+
+                end = getattr(
+                    node,
+                    "end_lineno",
+                    node.lineno
+                )
+
+                return "\n".join(
+                    lines[start:end]
+                )
+
+    return None
