@@ -106,6 +106,11 @@ elif page == "💻 Code Assistant":
         ]
     )
 
+    simple_mode = st.checkbox(
+        "🧒 Explain Like I'm Completely New"
+    )
+
+
     # Code input
     st.markdown("### 📥 Choose Code Input")
 
@@ -398,10 +403,23 @@ elif page == "💻 Code Assistant":
                 "🤖 AI is analyzing your code..."
             ):
 
+                if simple_mode:
+                    actual_level = (
+                        "Very beginner-friendly. "
+                        "Assume the learner has little "
+                        "programming experience. "
+                        "Avoid unnecessary technical jargon."
+                    )
+
+                else:
+
+                    actual_level = explanation_level
+
+
                 review = generate_code_review(
                     selected_code,
                     selected_analysis,
-                    explanation_level
+                    actual_level
                 )
 
                 st.session_state.review_result = review
@@ -571,6 +589,38 @@ elif page == "💻 Code Assistant":
                 st.write(
                     review["learning_explanation"]
                 )
+
+
+                # ---------------------------------------------
+                # Step-by-Step Explanation
+                # ---------------------------------------------
+
+                st.markdown(
+                    "### 🧭 Step-by-Step Explanation"
+                )
+
+                if review.get("step_by_step"):
+
+                    for item in review["step_by_step"]:
+
+                        step_number = item["step"]
+                        title = item["title"]
+                        explanation = item["explanation"]
+
+                        with st.expander(
+                            f"Step {step_number}: {title}"
+                        ):
+
+                            st.write(
+                                explanation
+                            )
+
+                else:
+
+                    st.info(
+                        "Step-by-step explanation is not available."
+                    )
+
 
 
                 # --------------------------------------------------

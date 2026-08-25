@@ -75,8 +75,26 @@ Return ONLY valid JSON using exactly this structure:
 
     "learning_explanation": "string",
 
+    "step_by_step": [
+        {{
+            "step": 1,
+            "title": "string",
+            "explanation": "string"
+        }}
+    ],
+
     "improved_code": "string"
 }}
+
+Step-by-step explanation requirements:
+
+- Explain the logical execution flow of the code.
+- Break the code into meaningful execution steps.
+- Explain loops and conditions when they affect the logic.
+- Explain important variable changes.
+- Do not explain every single line if several lines perform one logical operation.
+- Keep the explanation appropriate for the selected difficulty level.
+
 
 Rules:
 
