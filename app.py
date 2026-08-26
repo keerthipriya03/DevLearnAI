@@ -32,8 +32,16 @@ import streamlit as st
 # from dotenv import load_dotenv             #no need after llm integration into the model
 # from google import genai                   #no need after llm integration into the model
 
+#step2.2.1 added
+from modules.document_processor import (
+    extract_pdf_text
+)
+
+
 from modules.code_analyzer import( analyze_code , extract_functions, get_function_source )
 from modules.llm import generate_code_review
+
+
 
 
 # Load environment variables
@@ -719,6 +727,7 @@ elif page == "📚 Knowledge Manager":
         #     st.success(
         #         f"'{document_name}' added successfully!"
         #     )
+
         #step1.8 added
         else:
             existing_names = [
@@ -729,19 +738,68 @@ elif page == "📚 Knowledge Manager":
                 st.warning(
                     "A document with this name already exists."
                 )
+
+            # else:
+            #     document = {
+            #         "name": document_name.strip(),
+            #         "filename": uploaded_file.name,
+            #         "size": len(uploaded_file.getvalue()),
+            #         "status": "Uploaded"
+            #     }
+            #     st.session_state.documents.append(
+            #         document
+            #     )
+            #     st.success(
+            #         f"'{document_name}' added successfully!"
+            #     )
+
+            #step2.2.2 added changes the above else part.
             else:
-                document = {
-                    "name": document_name.strip(),
-                    "filename": uploaded_file.name,
-                    "size": len(uploaded_file.getvalue()),
-                    "status": "Uploaded"
-                }
-                st.session_state.documents.append(
-                    document
-                )
-                st.success(
-                    f"'{document_name}' added successfully!"
-                )
+                pdf_bytes = uploaded_file.getvalue()
+                with st.spinner(
+                    "📖 Reading PDF..."
+                ):
+                    result = extract_pdf_text(
+                        pdf_bytes
+                    )
+                if not result["success"]:
+                    st.error(
+                        "❌ Unable to process the PDF."
+                    )
+                    st.write(
+                        result["error"]
+                    )
+                else:
+                    st.success(
+                        "✅ PDF processed successfully!"
+                    )
+                    st.write(
+                        f"Total pages: "
+                        f"{result['total_pages']}"
+                    )
+                    st.write(
+                        f"Pages containing text: "
+                        f"{result['text_pages']}"
+                    )
+                    document = {
+                        "name": document_name.strip(),
+                        "filename": uploaded_file.name,
+                        "size": len(pdf_bytes),
+                        "status": "Uploaded",
+                        "total_pages": result["total_pages"],
+                        "text_pages": result["text_pages"],
+                        "pages": result["pages"]
+                    }
+
+                    st.session_state.documents.append(
+                        document
+                    )
+
+                    st.success(
+                        f"'{document_name}' added successfully!"
+                    )
+ 
+            
     #step1.9 added
     st.divider()
     st.markdown("### 📚 Your Documents")
@@ -777,12 +835,36 @@ elif page == "📚 Knowledge Manager":
                     st.caption(
                         document["filename"]
                     )
+                #step 2.2.3 changed the below code to comment out col2 and use col3 for size
+                # with col2:
+                #     st.write(
+                #         f"Status: {document['status']}"
+                #     )
                 with col2:
                     st.write(
                         f"Status: {document['status']}"
                     )
+                    st.caption(
+                        f"Pages: {document['total_pages']}"
+                    )
+
                 with col3:
                     st.write(
                         f"{document['size'] / 1024:.1f} KB"
+                    )
+
+            #step2.2.4 added
+            with st.expander(
+                "🔍 View extracted text"
+            ):
+
+                for page in document["pages"]:
+
+                    st.markdown(
+                        f"**📄 Page {page['page']}**"
+                    )
+
+                    st.text(
+                        page["text"]
                     )
 
