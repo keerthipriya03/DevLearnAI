@@ -41,6 +41,10 @@ from modules.llm import generate_code_review
 # api_key = os.getenv("GEMINI_API_KEY")       #no need after llm integration into the model
 # client = genai.Client(api_key=api_key)      #no need after llm integration into the model
 
+#step3.7 added
+if "documents" not in st.session_state:
+    st.session_state.documents = []
+
 
 # Page Configuration
 st.set_page_config(
@@ -64,7 +68,8 @@ page = st.sidebar.radio(
     [
         "📚 Knowledge Assistant",
         "💻 Code Assistant",
-        "🎯 Quiz"
+        "🎯 Quiz",
+        "📚 Knowledge Manager"
     ]
 )
 
@@ -642,3 +647,142 @@ elif page == "🎯 Quiz":
     st.info(
         "Quiz generation will be implemented later."
     )
+
+#KNOWLEDGE MANAGER
+elif page == "📚 Knowledge Manager":
+    # step1.1 added
+    st.header("📚 Personal Knowledge Manager")
+    st.write(
+        "Upload your learning materials and build "
+        "your personal AI knowledge base."
+    )
+    # step1.2 added
+    st.markdown("### 📥 Upload Learning Material")
+    uploaded_file = st.file_uploader(
+        "Upload a PDF document",
+        type=["pdf"]
+    )
+
+    # step1.4 added
+    document_name = st.text_input(
+        "Document name",
+        placeholder="Example: Python DSA Notes"
+    )
+
+    # step1.3 added
+    if uploaded_file is not None:
+        st.success(
+            f"Uploaded: {uploaded_file.name}"
+        )
+        file_size = (
+            len(uploaded_file.getvalue()) / 1024                 # gets the contents of the uploaded file as bytes
+        )
+        st.caption(
+            f"File size: {file_size:.2f} KB"
+        )
+        #step1.5 added
+        if not document_name.strip():
+            st.warning(
+                "Please provide a name for the document."
+            )
+        else:
+            st.success(
+                f"Ready to add: {document_name}"
+            )
+
+    #step1.6 added
+    if st.button(
+        "➕ Add to Knowledge Base",
+        type="primary"
+    ):
+        if uploaded_file is None:
+            st.warning(
+                "Please upload a PDF first."
+            )
+        elif not document_name.strip():
+            st.warning(
+                "Please provide a document name."
+            )
+        # else:
+        #     #step1.7 added
+        #     document = {
+        #         "name": document_name.strip(),
+        #         "filename": uploaded_file.name,
+        #         "size": len(uploaded_file.getvalue()),
+        #         "status": "Uploaded"
+        #     }
+
+        #     st.session_state.documents.append(
+        #         document
+        #     )
+
+        #     st.success(
+        #         f"'{document_name}' added successfully!"
+        #     )
+        #step1.8 added
+        else:
+            existing_names = [
+                document["name"]
+                for document in st.session_state.documents
+            ]
+            if document_name.strip() in existing_names:
+                st.warning(
+                    "A document with this name already exists."
+                )
+            else:
+                document = {
+                    "name": document_name.strip(),
+                    "filename": uploaded_file.name,
+                    "size": len(uploaded_file.getvalue()),
+                    "status": "Uploaded"
+                }
+                st.session_state.documents.append(
+                    document
+                )
+                st.success(
+                    f"'{document_name}' added successfully!"
+                )
+    #step1.9 added
+    st.divider()
+    st.markdown("### 📚 Your Documents")
+    if not st.session_state.documents:
+        st.info(
+            "No documents added yet."
+        )
+    # else:
+    #     for document in st.session_state.documents:
+    #         with st.container(border=True):
+    #             st.markdown(
+    #                 f"### 📄 {document['name']}"
+    #             )
+    #             st.caption(
+    #                 document["filename"]
+    #             )
+    #             st.write(
+    #                 f"Status: {document['status']}"
+    #             )
+    #             st.write(
+    #                 f"{document['size'] / 1024:.1f} KB"
+    #             )
+    else:
+        for document in st.session_state.documents:
+            with st.container(border=True):
+                col1, col2, col3 = st.columns(
+                    [4, 2, 1]
+                )
+                with col1:
+                    st.markdown(
+                        f"### 📄 {document['name']}"
+                    )
+                    st.caption(
+                        document["filename"]
+                    )
+                with col2:
+                    st.write(
+                        f"Status: {document['status']}"
+                    )
+                with col3:
+                    st.write(
+                        f"{document['size'] / 1024:.1f} KB"
+                    )
+
