@@ -33,9 +33,16 @@ import streamlit as st
 # from google import genai                   #no need after llm integration into the model
 
 #step2.2.1 added
+# from modules.document_processor import (
+#     extract_pdf_text
+# )
+
+#above changed step 3.2.1
 from modules.document_processor import (
-    extract_pdf_text
+    extract_pdf_text,
+    create_document_chunks
 )
+
 
 
 from modules.code_analyzer import( analyze_code , extract_functions, get_function_source )
@@ -781,6 +788,16 @@ elif page == "📚 Knowledge Manager":
                         f"Pages containing text: "
                         f"{result['text_pages']}"
                     )
+                    #step 3.2.2
+                    chunks = create_document_chunks(
+                        result["pages"]
+                    )
+
+                    st.write(
+                        f"Generated chunks: "
+                        f"{len(chunks)}"
+                    )
+
                     document = {
                         "name": document_name.strip(),
                         "filename": uploaded_file.name,
@@ -788,7 +805,9 @@ elif page == "📚 Knowledge Manager":
                         "status": "Uploaded",
                         "total_pages": result["total_pages"],
                         "text_pages": result["text_pages"],
-                        "pages": result["pages"]
+                        "pages": result["pages"],
+                        #step 3.2.3
+                        "chunks": chunks
                     }
 
                     st.session_state.documents.append(
@@ -867,4 +886,25 @@ elif page == "📚 Knowledge Manager":
                     st.text(
                         page["text"]
                     )
+
+            #step3.2.4 added
+            with st.expander(
+                "🧩 View generated chunks"
+            ):
+
+                for chunk in document["chunks"]:
+
+                    st.markdown(
+                        f"**📄 Page {chunk['page']} | "
+                        f"Chunk {chunk['chunk_index']}**"
+                    )
+
+                    st.caption(
+                        f"Chunk ID: {chunk['chunk_id']}"
+                    )
+
+                    st.text(
+                        chunk["text"]
+                    )
+
 
