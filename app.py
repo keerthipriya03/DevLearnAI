@@ -47,6 +47,8 @@ from modules.document_processor import (
 
 from modules.code_analyzer import( analyze_code , extract_functions, get_function_source )
 from modules.llm import generate_code_review
+#step 4.5
+from modules.embeddings import generate_embeddings
 
 
 
@@ -792,6 +794,36 @@ elif page == "📚 Knowledge Manager":
                     chunks = create_document_chunks(
                         result["pages"]
                     )
+                    #step 4.6
+                    with st.spinner("🧠 Generating embeddings..."):
+                        chunks = generate_embeddings(chunks)
+
+                    st.success("✅ Embeddings generated!")
+
+                    #added temporarily to check the embeddings generated for the first 5 chunks and their dimensions(step 4.7)
+                    st.write("Total chunks:", len(chunks))
+                    # for i, chunk in enumerate(chunks[:5]):
+                    #     st.write(
+                    #         f"Chunk {i} embedding dimensions:",
+                    #         len(chunk["embedding"])
+                    #     )
+
+
+                    if chunks:
+                        first_embedding = chunks[0]["embedding"]
+                        st.write(
+                            "Embedding dimensions:",
+                            len(first_embedding)
+                        )
+                        st.write(
+                            "First chunk embedding preview:",
+                            first_embedding[:10]
+                        )
+
+                        #for debugging purposes, we can display the first chunk and its embedding dimensions(step 4.7)
+                        # st.write("First chunk:")
+                        # st.json(chunks[0])
+
 
                     st.write(
                         f"Generated chunks: "
