@@ -42,6 +42,12 @@ from modules.document_processor import (
     extract_pdf_text,
     create_document_chunks
 )
+#step 5.5
+from modules.vector_store import (
+    add_chunks,
+    get_collection_count
+)
+
 
 
 
@@ -798,7 +804,25 @@ elif page == "📚 Knowledge Manager":
                     with st.spinner("🧠 Generating embeddings..."):
                         chunks = generate_embeddings(chunks)
 
+                    #step 5.5
+                    add_chunks(
+                        chunks,
+                        document_name.strip()
+                    )
+
                     st.success("✅ Embeddings generated!")
+
+                    #step 5.6
+                    st.divider()
+
+                    st.subheader(
+                        "🗄️ Knowledge Base Statistics"
+                    )
+                    st.metric(
+                        "Stored Chunks",
+                        get_collection_count()
+                    )
+
 
                     #added temporarily to check the embeddings generated for the first 5 chunks and their dimensions(step 4.7)
                     st.write("Total chunks:", len(chunks))
